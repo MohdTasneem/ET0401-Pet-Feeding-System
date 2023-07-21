@@ -24,20 +24,23 @@ for j in range(4):
     GPIO.setup(ROW[j], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 def get_key(title):
-    pressed_keys = []
+    pressed_keys = ""
     break_loop = False
     # scan keypad
     while not break_loop:
-        LCD.lcd_display_string(title + "".join(str(key) for key in pressed_keys), 2)
+        LCD.lcd_display_string(title + pressed_keys, 2)
         for i in range(3):  # loop through all columns
             GPIO.output(COL[i], 0)  # pull one column pin low
             for j in range(4):  # check which row pin becomes low
                 if GPIO.input(ROW[j]) == 0:  # if a key is pressed
                     if MATRIX[j][i] == "#":
                         break_loop = True
+                    elif MATRIX[j][i] == "*":
+                        if len(pressed_keys) > 0:
+                            pressed_keys = pressed_keys[:-1]  # Remove the last character
                     else:
                         print(MATRIX[j][i])  # print the key pressed
-                        pressed_keys.append(MATRIX[j][i])
+                        pressed_keys += str(MATRIX[j][i])
                         while GPIO.input(ROW[j]) == 0:  # debounce
                             sleep(0.1)
             GPIO.output(COL[i], 1)  # write back the default value of 1
@@ -48,11 +51,11 @@ def main():
     weight_input_value = get_key("Weight: ")
     if weight_input_value:
         LCD.lcd_clear()
-    LCD.lcd_display_string("Input time", 1)
-    time_input_value = get_key("Time: ")
-    if (weight_input_value and time_input_value):
-        LCD.lcd_clear()
-        LCD.lcd_display_string("Weight: " + "".join(str(key) for key in weight_input_value), 1)
-        LCD.lcd_display_string("Time: " + "".join(str(key) for key in time_input_value), 2)
+        LCD.lcd_display_string("Input time", 1)
+        time_input_value = get_key("Time in 24hr: ")
+        if time_input_value:
+            LCD.lcd_clear()
+            LCD.lcd_display_string("Weight: " + weight_input_value, 1)
+            LCD.lcd_display_string("Time: " + time_input_value, 2)
 
 main()

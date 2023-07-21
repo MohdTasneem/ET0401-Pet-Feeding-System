@@ -1,63 +1,58 @@
 import RPi.GPIO as GPIO
 from time import sleep
-import project.I2C_LCD_driver as I2C_LCD_driver #import the library
+import I2C_LCD_driver as I2C_LCD_driver
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-LCD = I2C_LCD_driver.lcd() #instantiate an lcd object, call it LCD
+LCD = I2C_LCD_driver.lcd()
 
 MATRIX = [[1, 2, 3],
-         [4, 5, 6],
-         [7, 8, 9],
-         ['*', 0, '#']]  # layout of keys on keypad
+          [4, 5, 6],
+          [7, 8, 9],
+          ['*', 0, '#']]  # layout of keys on the keypad
 ROW = [6, 20, 19, 13]  # row pins
 COL = [12, 5, 16]  # column pins
 
-def keypad_init():
-    # set column pins as outputs, and write default value of 1 to each
-    for i in range(3):
-        GPIO.setup(COL[i], GPIO.OUT)
-        GPIO.output(COL[i], 1)
+# set column pins as outputs, and write the default value of 1 to each
+for i in range(3):
+    GPIO.setup(COL[i], GPIO.OUT)
+    GPIO.output(COL[i], 1)
 
-    # set row pins as inputs, with pull up
-    for j in range(4):
-        GPIO.setup(ROW[j], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+# set row pins as inputs, with pull-up
+for j in range(4):
+    GPIO.setup(ROW[j], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-
-
-def get_key():
-    pressed_keys = [1,2,5,6]
+def get_key(title):
+    pressed_keys = []
+    break_loop = False
     # scan keypad
-    while (True):
-        for i in range(3):  # loop thru’ all columns
+    while not break_loop:
+        LCD.lcd_display_string("Weight: " + "".join(str(key) for key in pressed_keys), 2)
+        for i in range(3):  # loop through all columns
             GPIO.output(COL[i], 0)  # pull one column pin low
             for j in range(4):  # check which row pin becomes low
                 if GPIO.input(ROW[j]) == 0:  # if a key is pressed
-                    pressed_keys.append(MATRIX[j][i])  # store the key pressed
-                    while GPIO.input(ROW[j]) == 0:  # debounce
-                        sleep(0.1)
-            GPIO.output(COL[i], 1)  # write back default value of 1
-
-            # If any keys were pressed, return the result and clear the list
-        if len(pressed_keys) == 6:
-            result = "".join(str(key) for key in pressed_keys)
-            return result
-
-def display_led(string_to_display):
-    LCD.lcd_display_string(string_to_display, 1)
-    
-def clear_led():
-    LCD.lcd_clear()
+                    if MATRIX[j][i] == "#":
+                        break_loop = True
+                    else:
+                        print(MATRIX[j][i])  # print the key pressed
+                        pressed_keys.append(MATRIX[j][i])
+                        while GPIO.input(ROW[j]) == 0:  # debounce
+                            sleep(0.1)
+            GPIO.output(COL[i], 1)  # write back the default value of 1
+    return pressed_keys
 
 def main():
-    keypad_init()
-    LCD.lcd_display_string("Test", 1)
-    weight_input_value = get_key()
-    LCD.lcd_display_string(get_key(),2)
-    # if (weight_input_value):
-    #     LCD.lcd_clear()
-    #     LCD.lcd_display_string("Weight: " + weight_input_value, 1)
-    
+    LCD.lcd_display_string("Input weight", 1)
+    weight_input_value = get_key("Weight:")
+    if weight_input_value:
+        LCD.lcd_clear()
+    LCD.lcd_display_string("Input time", 1)
+    time_input_value = get_key("Time:")
+    if (weight_input_value and time_input_value):
+        LCD.lcd_clear()
+        LCD.lcd_display_string("Weight: " + "".join(str(key) for key in weight_input_value), 1)
+        LCD.lcd_display_string("Time: " + "".join(str(key) for key in time_input_value), 2)
 
 main()

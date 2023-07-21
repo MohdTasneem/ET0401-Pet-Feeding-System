@@ -28,7 +28,7 @@ def get_key(title):
     break_loop = False
     # scan keypad
     while not break_loop:
-        LCD.lcd_display_string("Weight: " + "".join(str(key) for key in pressed_keys), 2)
+        LCD.lcd_display_string(title + "".join(str(key) for key in pressed_keys), 2)
         for i in range(3):  # loop through all columns
             GPIO.output(COL[i], 0)  # pull one column pin low
             for j in range(4):  # check which row pin becomes low
@@ -45,11 +45,11 @@ def get_key(title):
 
 def main():
     LCD.lcd_display_string("Input weight", 1)
-    weight_input_value = get_key("Weight:")
+    weight_input_value = get_key("Weight: ")
     if weight_input_value:
         LCD.lcd_clear()
     LCD.lcd_display_string("Input time", 1)
-    time_input_value = get_key("Time:")
+    time_input_value = get_key("Time: ")
     if (weight_input_value and time_input_value):
         LCD.lcd_clear()
         LCD.lcd_display_string("Weight: " + "".join(str(key) for key in weight_input_value), 1)

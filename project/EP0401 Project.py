@@ -36,8 +36,9 @@ def get_key(title):
                     if MATRIX[j][i] == "#":
                         break_loop = True
                     elif MATRIX[j][i] == "*":
-                        if len(pressed_keys) > 0:
-                            pressed_keys = pressed_keys[:-1]  # Remove the last character
+                        pressed_keys = pressed_keys[:-1]
+                        print(pressed_keys)
+                        LCD.lcd_display_string(title + "        " + pressed_keys, 2)
                     else:
                         print(MATRIX[j][i])  # print the key pressed
                         pressed_keys += str(MATRIX[j][i])
@@ -52,7 +53,7 @@ def main():
     if weight_input_value:
         LCD.lcd_clear()
         LCD.lcd_display_string("Input time", 1)
-        time_input_value = get_key("Time in 24hr: ")
+        time_input_value = get_key("Time: ")
         if time_input_value:
             LCD.lcd_clear()
             LCD.lcd_display_string("Weight: " + weight_input_value, 1)

@@ -1,4 +1,4 @@
-import I2C_LCD_driver #import the library
+import project.I2C_LCD_driver as I2C_LCD_driver #import the library
 from time import sleep
 
 LCD = I2C_LCD_driver.lcd() #instantiate an lcd object, call it LCD

@@ -38,7 +38,7 @@ def get_key(title):
                     elif MATRIX[j][i] == "*":
                         pressed_keys = pressed_keys[:-1]
                         print(pressed_keys)
-                        LCD.lcd_display_string(title + "        " + pressed_keys, 2)
+                        LCD.lcd_display_string(title + "            " + pressed_keys, 2)
                     else:
                         print(MATRIX[j][i])  # print the key pressed
                         pressed_keys += str(MATRIX[j][i])

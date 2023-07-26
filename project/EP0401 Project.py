@@ -44,7 +44,6 @@ def update_time_display(time_input):
         current_time = get_current_time()
         LCD.lcd_display_string("Time " + current_time, 2)
         time.sleep(1)
-        LCD.lcd_clear()
 
 def get_keypad_input(title):
     pressed_keys = ""
@@ -77,6 +76,7 @@ def get_keypad_input(title):
 
 
 def play_buzzer():
+    GPIO.setup(18,GPIO.OUT)
     GPIO.output(18, 1)
     time.sleep(1)
     GPIO.output(18, 0)
@@ -104,7 +104,11 @@ def main():
     time_thread.start()
     while True:
         current_time = get_current_time()
+        print("current_time: " + current_time)
+        print("feeding_time: " + feeding_time)
+        print(current_time == feeding_time)
         if current_time == feeding_time:
             play_buzzer()
+            send_text_message("+65" + phone_number_input, "Your pet has been fed at " + feeding_time + "!")
 
 main()

@@ -25,6 +25,16 @@ for i in range(3):
 for j in range(4):
     GPIO.setup(ROW[j], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+def format_to_24_hour(time_input):
+    if len(time_input) >= 4:
+        hours = time_input[:2]
+        minutes = time_input[2:4]
+        seconds = "00"
+        formatted_time = f"{hours}:{minutes}:{seconds}"
+        return formatted_time
+    else:
+        return "Invalid time format"
+
 def get_current_time():
     return time.strftime("%H:%M:%S")
 
@@ -72,6 +82,7 @@ def main():
     LCD.lcd_clear()
     LCD.lcd_display_string("Enter time", 1)
     feeding_time = get_keypad_input("(24hr): ")
+    feeding_time = format_to_24_hour(feeding_time)
     LCD.lcd_clear()
     LCD.lcd_display_string("Link phone no.?", 1)
     link_number = int(get_keypad_input("0=no, 1=yes: "))

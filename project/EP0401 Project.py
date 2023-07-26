@@ -40,9 +40,9 @@ def get_current_time():
 
 def update_time_display(time_input):
     while True:
-        LCD.lcd_display_string("" + time_input, 1)
+        LCD.lcd_display_string("To feed " + time_input, 1)
         current_time = get_current_time()
-        LCD.lcd_display_string("Time: " + current_time, 2)
+        LCD.lcd_display_string("Time " + current_time, 2)
         time.sleep(1)
         LCD.lcd_clear()
 

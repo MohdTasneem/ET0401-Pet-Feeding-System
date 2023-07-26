@@ -39,7 +39,7 @@ def update_time_display(time_input):
 def get_keypad_input(title):
     pressed_keys = ""
     while True:
-        if title == "Enter time":
+        if "(24hr)" in title:
             formatted_time = pressed_keys[:2] + ":" + pressed_keys[2:]
             LCD.lcd_display_string(title + formatted_time, 2)
         else:

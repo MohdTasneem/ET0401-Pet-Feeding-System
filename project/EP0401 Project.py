@@ -26,20 +26,20 @@ for j in range(4):
     GPIO.setup(ROW[j], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 def get_current_time():
-    return time.strftime("%H:%M")
+    return time.strftime("%H:%M:%S")
 
 def update_time_display(time_input):
     while True:
         LCD.lcd_display_string("" + time_input, 1)
         current_time = get_current_time()
         LCD.lcd_display_string("Time: " + current_time, 2)
-        time.sleep(60)
+        time.sleep(1)
         LCD.lcd_clear()
 
 def get_keypad_input(title):
     pressed_keys = ""
     while True:
-        if "time" in title.lower():
+        if title == "Enter time":
             formatted_time = pressed_keys[:2] + ":" + pressed_keys[2:]
             LCD.lcd_display_string(title + formatted_time, 2)
         else:

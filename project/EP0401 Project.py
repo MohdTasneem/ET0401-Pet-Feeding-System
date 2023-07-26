@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
-from time import sleep
+import time
+import threading
 import I2C_LCD_driver as I2C_LCD_driver
 from twilio_msg import send_text_message
 
@@ -23,6 +24,15 @@ for i in range(3):
 # set row pins as inputs, with pull-up
 for j in range(4):
     GPIO.setup(ROW[j], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+def get_current_time():
+    return time.strftime("%H:%M:%S")
+
+def update_time_display():
+    while True:
+        current_time = get_current_time()
+        LCD.lcd_display_string("Current Time: " + current_time, 2)
+        time.sleep(1)
 
 def get_keypad_input(title):
     pressed_keys = ""
@@ -64,5 +74,12 @@ def main():
         LCD.lcd_clear()
         LCD.lcd_display_string("Enter phone no.", 1)
         time_input_value = get_keypad_input("")
+        LCD.lcd_clear()
+    LCD.lcd_display_string("Setup done!", 1)
+    time.sleep(1)
+    LCD.lcd_clear()
+    time_thread = threading.Thread(target=update_time_display)
+    time_thread.start()
+    LCD.lcd_display_string("Dispensing in " + time_input_value, 1)
 
 main()

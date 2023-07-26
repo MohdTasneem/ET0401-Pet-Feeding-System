@@ -109,6 +109,8 @@ def main():
         print(current_time == feeding_time)
         if current_time == feeding_time:
             play_buzzer()
-            send_text_message("+65" + phone_number_input, "Your pet has been fed at " + feeding_time + "!")
+            if link_number == 1:
+                send_text_message("+65" + phone_number_input, "Your pet has been fed at " + feeding_time + "!")
+        time.sleep(0.8)
 
 main()

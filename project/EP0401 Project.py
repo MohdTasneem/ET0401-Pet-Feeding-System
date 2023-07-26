@@ -39,12 +39,11 @@ def update_time_display(time_input):
 def get_keypad_input(title):
     pressed_keys = ""
     while True:
-        if "time" in title:
-            if len(pressed_keys) == 2:
-                pressed_keys += ":"
-            elif len(pressed_keys) == 5:
-                break
-        LCD.lcd_display_string(title + pressed_keys, 2)
+        if "time" in title.lower():
+            formatted_time = pressed_keys[:2] + ":" + pressed_keys[2:]
+            LCD.lcd_display_string(title + formatted_time, 2)
+        else:
+            LCD.lcd_display_string(title + pressed_keys, 2)
         submit_pressed = False
         for i in range(3):  # loop through all columns
             GPIO.output(COL[i], 0)  # pull one column pin low

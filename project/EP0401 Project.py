@@ -76,6 +76,11 @@ def get_keypad_input(title):
             return pressed_keys
 
 
+def play_buzzer():
+    GPIO.output(18, 1)
+    time.sleep(1)
+    GPIO.output(18, 0)
+
 def main():
     LCD.lcd_display_string("Enter weight", 1)
     weight = int(get_keypad_input("(g): "))
@@ -97,5 +102,9 @@ def main():
     LCD.lcd_clear()
     time_thread = threading.Thread(target=update_time_display, args=(feeding_time,))
     time_thread.start()
+    while True:
+        current_time = get_current_time()
+        if current_time == feeding_time:
+            play_buzzer()
 
 main()

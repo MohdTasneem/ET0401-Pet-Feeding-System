@@ -12,5 +12,3 @@ def send_text_message(destination, message):
     )
     
     return message.sid
-
-send_text_message("+6583233863", "Hello World")

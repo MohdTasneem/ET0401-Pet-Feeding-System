@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 from time import sleep
 import I2C_LCD_driver as I2C_LCD_driver
+from twilio_msg import send_text_message
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)

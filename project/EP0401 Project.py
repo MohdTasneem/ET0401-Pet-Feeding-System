@@ -14,7 +14,7 @@ MATRIX = [[1, 2, 3],
           [7, 8, 9],
           ['*', 0, '#']]  # layout of keys on the keypad
 ROW = [6, 20, 19, 13]  # row pins
-COL = [12, 5, 16]  # column pins
+COL = [12, 5, 16]  # column
 
 # set column pins as outputs, and write the default value of 1 to each
 for i in range(3):
@@ -26,17 +26,24 @@ for j in range(4):
     GPIO.setup(ROW[j], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 def get_current_time():
-    return time.strftime("%H:%M:%S")
+    return time.strftime("%H:%M")
 
-def update_time_display():
+def update_time_display(time_input):
     while True:
+        LCD.lcd_display_string("" + time_input, 1)
         current_time = get_current_time()
-        LCD.lcd_display_string("Current Time: " + current_time, 2)
-        time.sleep(1)
+        LCD.lcd_display_string("Time: " + current_time, 2)
+        time.sleep(60)
+        LCD.lcd_clear()
 
 def get_keypad_input(title):
     pressed_keys = ""
     while True:
+        if "time" in title:
+            if len(pressed_keys) == 2:
+                pressed_keys += ":"
+            elif len(pressed_keys) == 5:
+                break
         LCD.lcd_display_string(title + pressed_keys, 2)
         submit_pressed = False
         for i in range(3):  # loop through all columns
@@ -53,7 +60,7 @@ def get_keypad_input(title):
                         print(MATRIX[j][i])  # print the key pressed
                         pressed_keys += str(MATRIX[j][i])
                         while GPIO.input(ROW[j]) == 0:  # debounce
-                            sleep(0.1)
+                            time.sleep(0.1)
             GPIO.output(COL[i], 1)  # write back the default value of 1
         
         if submit_pressed:
@@ -62,10 +69,10 @@ def get_keypad_input(title):
 
 def main():
     LCD.lcd_display_string("Enter weight", 1)
-    weight_input_value = int(get_keypad_input("(g): "))
+    weight = int(get_keypad_input("(g): "))
     LCD.lcd_clear()
     LCD.lcd_display_string("Enter time", 1)
-    time_input_value = get_keypad_input("(24hr): ")
+    feeding_time = get_keypad_input("(24hr): ")
     LCD.lcd_clear()
     LCD.lcd_display_string("Link phone no.?", 1)
     link_number = int(get_keypad_input("0=no, 1=yes: "))
@@ -73,13 +80,12 @@ def main():
     if link_number == 1:
         LCD.lcd_clear()
         LCD.lcd_display_string("Enter phone no.", 1)
-        time_input_value = get_keypad_input("")
-        LCD.lcd_clear()
+        phone_number_input = get_keypad_input("")
+    LCD.lcd_clear()
     LCD.lcd_display_string("Setup done!", 1)
     time.sleep(1)
     LCD.lcd_clear()
-    time_thread = threading.Thread(target=update_time_display)
+    time_thread = threading.Thread(target=update_time_display, args=(feeding_time,))
     time_thread.start()
-    LCD.lcd_display_string("Dispensing in " + time_input_value, 1)
 
 main()

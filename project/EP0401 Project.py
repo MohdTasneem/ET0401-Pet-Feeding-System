@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 import threading
+import random
 import I2C_LCD_driver as I2C_LCD_driver
 from twilio_msg import send_text_message
 
@@ -89,13 +90,42 @@ def main():
     feeding_time = get_keypad_input("(24hr): ")
     feeding_time = format_to_24_hour(feeding_time)
     LCD.lcd_clear()
-    LCD.lcd_display_string("Link phone no.?", 1)
-    link_number = int(get_keypad_input("0=no, 1=yes: "))
-    print(link_number)
-    if link_number == 1:
-        LCD.lcd_clear()
-        LCD.lcd_display_string("Enter phone no.", 1)
-        phone_number_input = get_keypad_input("")
+    
+    # Link phone number loop
+    while True:
+        LCD.lcd_display_string("Link phone no.?", 1)
+        link_number = int(get_keypad_input("0=no, 1=yes: "))
+        print(link_number)
+        if link_number == 1: # If the user chooses to link the phone number, ask for opt to verify the phone number
+            LCD.lcd_clear()
+            LCD.lcd_display_string("Enter phone no.", 1)
+            phone_number_input = get_keypad_input("")
+            LCD.lcd_clear()
+            opt = random.randint(1000, 9999)
+            result = send_text_message("+65" + phone_number_input, "Your OPT is " + str(opt))
+            if result == 400:
+                LCD.lcd_clear()
+                LCD.lcd_display_string("Invalid phone no.", 1)
+                time.sleep(1)
+                LCD.lcd_clear()
+            else:
+                LCD.lcd_display_string("OPT sent to", 1)
+                LCD.lcd_display_string("+65" + phone_number_input, 2)
+                time.sleep(2)
+                LCD.lcd_clear()
+                LCD.lcd_display_string("Enter OPT", 1)
+                opt_input = get_keypad_input("")
+                while opt_input != str(opt):
+                    LCD.lcd_clear()
+                    LCD.lcd_display_string("Invalid OPT", 1)
+                    LCD.lcd_display_string("Enter OPT", 2)
+                    opt_input = get_keypad_input("")
+                LCD.lcd_clear()
+                LCD.lcd_display_string("Phone no. linked!", 1)
+                break  # Exit the loop if the phone number is valid
+        else:
+            break  # Exit the loop if the user chooses not to link the phone number
+
     LCD.lcd_clear()
     LCD.lcd_display_string("Setup done!", 1)
     time.sleep(1)
@@ -110,7 +140,7 @@ def main():
         if current_time == feeding_time:
             play_buzzer()
             if link_number == 1:
-                send_text_message("+65" + phone_number_input, "Your pet has been fed at " + feeding_time + "!")
+                result = send_text_message("+65" + phone_number_input, "Your pet has been fed at " + feeding_time + "!")
         time.sleep(0.8)
 
 main()

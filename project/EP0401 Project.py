@@ -56,7 +56,7 @@ def upload_to_imgur(path):
 def send_text_message(destination, message, image_url):
     try:
         account_sid = 'AC17f0a9ec890036265cba68687f70a297'
-        auth_token = '5a49c7578256dc9af3d30d96ddf9bf95'
+        auth_token = '75f2310a56e63c08a3738b16caf2d16d'
         client = Client(account_sid, auth_token)
         print(image_url)
         if (image_url == None):

@@ -3,12 +3,25 @@ import time
 import threading
 import random
 import I2C_LCD_driver as I2C_LCD_driver
-from twilio_msg import send_text_message
+from twilio.rest import Client
+from twilio.base.exceptions import TwilioRestException
+import random
+from PIL import Image
+from picamera import PiCamera
+from os import path
+from imgurpython import ImgurClient
+import datetime
+import csv
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
+camera = PiCamera()
+camera.start_preview()
+
 LCD = I2C_LCD_driver.lcd()
+GPIO.setup(26,GPIO.OUT)
+PWM = GPIO.PWM(26, 50)
 
 MATRIX = [[1, 2, 3],
           [4, 5, 6],
@@ -25,6 +38,45 @@ for i in range(3):
 # set row pins as inputs, with pull-up
 for j in range(4):
     GPIO.setup(ROW[j], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+def write_to_csv(phone_number, weight, success):
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open('data.csv', mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([phone_number, weight, success, timestamp])
+
+def upload_to_imgur(path):
+    client_id = '150fcc365051925'
+    client_secret = '4dd7a56dd94eaa89ed6925f0489d50bbec5fab38'
+
+    client = ImgurClient(client_id, client_secret)
+    response = client.upload_from_path(path, config=None, anon=True)
+    return response['link']
+
+def send_text_message(destination, message, image_url):
+    try:
+        account_sid = 'AC17f0a9ec890036265cba68687f70a297'
+        auth_token = '75f2310a56e63c08a3738b16caf2d16d'
+        client = Client(account_sid, auth_token)
+        print(image_url)
+        if (image_url == None):
+            message = client.messages.create(
+                to=destination,
+                from_='+12185629896',
+                body=message,
+            )
+        else:
+            message = client.messages.create(
+                from_='+12185629896',
+                to=destination,
+                body=message,
+                media_url=image_url,
+            )
+        print(message.sid)
+        return message.sid
+    except TwilioRestException as err:
+        print(err)
+        return err.status
 
 def format_to_24_hour(time_input):
     if len(time_input) >= 4:
@@ -45,6 +97,10 @@ def update_time_display(time_input):
         current_time = get_current_time()
         LCD.lcd_display_string("Time " + current_time, 2)
         time.sleep(1)
+
+def take_picture(path):
+        camera.capture(path)
+        img = Image.open(path)
 
 def get_keypad_input(title):
     pressed_keys = ""
@@ -83,6 +139,11 @@ def play_buzzer():
     GPIO.output(18, 0)
 
 def main():
+    PWM.start(12) # close the dispenser
+    LCD.lcd_display_string("Start of setup", 1)
+    time.sleep(1)
+    LCD.lcd_clear()
+
     LCD.lcd_display_string("Enter weight", 1)
     weight = int(get_keypad_input("(g): "))
     LCD.lcd_clear()
@@ -102,23 +163,23 @@ def main():
             phone_number_input = get_keypad_input("")
             LCD.lcd_clear()
             opt = random.randint(1000, 9999)
-            result = send_text_message("+65" + phone_number_input, "Your OPT is " + str(opt))
+            result = send_text_message("+65" + phone_number_input, "Your OTP is " + str(opt), None)
             if result == 400:
                 LCD.lcd_clear()
                 LCD.lcd_display_string("Invalid phone no.", 1)
                 time.sleep(1)
                 LCD.lcd_clear()
             else:
-                LCD.lcd_display_string("OPT sent to", 1)
+                LCD.lcd_display_string("OTP sent to", 1)
                 LCD.lcd_display_string("+65" + phone_number_input, 2)
                 time.sleep(2)
                 LCD.lcd_clear()
-                LCD.lcd_display_string("Enter OPT", 1)
+                LCD.lcd_display_string("Enter OTP", 1)
                 opt_input = get_keypad_input("")
                 while opt_input != str(opt):
                     LCD.lcd_clear()
-                    LCD.lcd_display_string("Invalid OPT", 1)
-                    LCD.lcd_display_string("Enter OPT", 2)
+                    LCD.lcd_display_string("Invalid OTP", 1)
+                    LCD.lcd_display_string("Enter OTP", 2)
                     opt_input = get_keypad_input("")
                 LCD.lcd_clear()
                 LCD.lcd_display_string("Phone no. linked!", 1)
@@ -139,8 +200,17 @@ def main():
         print(current_time == feeding_time)
         if current_time == feeding_time:
             play_buzzer()
+            PWM.start(3)
+            time.sleep(2)
+            PWM.start(12)
+            
             if link_number == 1:
-                result = send_text_message("+65" + phone_number_input, "Your pet has been fed at " + feeding_time + "!")
+                path = '/home/pi/Desktop/ET0401-Pet-Feeding-System/project/pet.jpg'
+                take_picture(path)
+                image_url = upload_to_imgur(path)
+                write_to_csv(phone_number_input, weight, "True")
+                result = send_text_message("+65" + phone_number_input, "Your pet has been fed at " + feeding_time + "!", image_url)
+            
         time.sleep(0.8)
 
 main()

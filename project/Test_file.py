@@ -69,8 +69,8 @@ def send_telegram_image(token, chat_id, image_path):
 
 def write_to_csv(phone_number, weight, success):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open('data.csv', mode='a', newline='') as file:
-        writer = csv.writer(file)
+    with open('data.csv', 'a') as file:
+        writer = csv.writer(file, delimiter = ',', lineterminator = '\n')
         writer.writerow([phone_number, weight, success, timestamp])
 
 
@@ -226,7 +226,7 @@ def main():
                 send_telegram_image(bot_token, chat_id, path)
                 write_to_csv(phone_number_input, weight, "True")
 
-        time.sleep(0.8)
+        time.sleep(1)
 
 
 main()

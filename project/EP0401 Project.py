@@ -41,8 +41,8 @@ for j in range(4):
 
 def write_to_csv(phone_number, weight, success):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open('data.csv', mode='a', newline='') as file:
-        writer = csv.writer(file)
+    with open('data.csv', 'a') as file:
+        writer = csv.writer(file, delimiter = ',', lineterminator = '\n')
         writer.writerow([phone_number, weight, success, timestamp])
 
 def upload_to_imgur(path):

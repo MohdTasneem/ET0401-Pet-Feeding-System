@@ -17,6 +17,9 @@ import csv
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
+spi=spidev.SpiDev() #create SPI object
+spi.open(0,0) #open SPI port 0, device (CS) 0
+
 # Initialize the camera
 camera = PiCamera()
 camera.start_preview()
@@ -41,6 +44,20 @@ for i in range(3):
 # set row pins as inputs, with pull-up
 for j in range(4):
     GPIO.setup(ROW[j], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+# Function to read the value of potentiometer
+def readadc(adcnum):
+    #read SPI data from the MCP3008, 8 channels in total
+    if adcnum>7 or adcnum<0:
+        return -1
+    spi.max_speed_hz = 1350000
+    r=spi.xfer2([1,8+adcnum<<4,0]) #construct list of 3 items, before sending to ADC:
+                                 #1(start), (single-ended+channel#) shifted left 4 bits, 0(stop)
+                                 #see MCP3008 datasheet for details
+    data=((r[1]&3)<<8)+r[2] # ADD first byte with 3 or 0b00000011 - masking operation
+                            #shift result left by 8 bits
+                            #OR result with second byte, to get 10-bit ADC result
+    return data
 
 # Function to write data to data.csv
 def write_to_csv(phone_number, weight, success):
@@ -170,13 +187,13 @@ def main():
         LCD.lcd_display_string("Link phone no.?", 1) # Asks user if they would like to link their phone number
         link_number = int(get_keypad_input("0=no, 1=yes: ")) # Gets the user's choice from keypad input
         print(link_number)
-        if link_number == 1: # If the user chooses to link the phone number, ask for opt to verify the phone number
+        if link_number == 1: # If the user chooses to link the phone number, ask for otp to verify the phone number
             LCD.lcd_clear()
             LCD.lcd_display_string("Enter phone no.", 1) # Asks user to enter their phone number
             phone_number_input = get_keypad_input("") # Gets the phone number from keypad input
             LCD.lcd_clear()
-            opt = random.randint(1000, 9999) # Generates a random 4 digit OTP
-            result = send_text_message("+65" + phone_number_input, "Your OTP is " + str(opt), None) # Sends the OTP to the user's phone number
+            otp = random.randint(1000, 9999) # Generates a random 4 digit OTP
+            result = send_text_message("+65" + phone_number_input, "Your OTP is " + str(otp), None) # Sends the OTP to the user's phone number
             if result == 400: # If the phone number is invalid, prompt the user to enter a valid phone number
                 LCD.lcd_clear()
                 LCD.lcd_display_string("Invalid phone no.", 1)
@@ -188,12 +205,12 @@ def main():
                 time.sleep(2)
                 LCD.lcd_clear()
                 LCD.lcd_display_string("Enter OTP", 1) # Asks user to enter the OTP
-                opt_input = get_keypad_input("") # Gets the OTP from keypad input
-                while opt_input != str(opt): # If the OTP entered is incorrect, prompt the user to enter the OTP again
+                otp_input = get_keypad_input("") # Gets the OTP from keypad input
+                while otp_input != str(otp): # If the OTP entered is incorrect, prompt the user to enter the OTP again
                     LCD.lcd_clear()
                     LCD.lcd_display_string("Invalid OTP", 1)
                     LCD.lcd_display_string("Enter OTP", 2)
-                    opt_input = get_keypad_input("")
+                    otp_input = get_keypad_input("")
                 LCD.lcd_clear()
                 LCD.lcd_display_string("Phone no. linked!", 1) # Tells the user that the phone number has been linked
                 break  # Exit the loop if the phone number is valid
@@ -214,15 +231,18 @@ def main():
         if current_time == feeding_time: # If the current time is the same as the feeding time, start the pet feeding process
             play_buzzer() # Play the buzzer to simulate a speaker playing a sound to get the pet's attention
             PWM.start(3)
-            time.sleep(2)
-            PWM.start(12)
+            while weight_dispensed < weight: # Loop to dispense the food until the weight dispensed is the same as the weight of the food
+                weight_dispensed = readadc(1)
+                print("weight dispensed" , weight_dispensed)
             
-            if link_number == 1: # If the user has linked their phone number, send a text message to the user
-                path = '/home/pi/Desktop/ET0401-Pet-Feeding-System/project/pet.jpg'
-                take_picture(path)
-                image_url = upload_to_imgur(path)
-                write_to_csv(phone_number_input, weight, "True")
-                result = send_text_message("+65" + phone_number_input, "Your pet has been fed at " + feeding_time + "!", image_url)
+            if weight_dispensed >= weight: # If the weight dispensed is the same as the weight of the food, stop the pet feeding process
+                PWM.start(12)
+                if link_number == 1: # If the user has linked their phone number, send a text message to the user to notify them that their pet has been fed
+                    path = '/home/pi/Desktop/ET0401-Pet-Feeding-System/project/pet.jpg'
+                    take_picture(path)
+                    image_url = upload_to_imgur(path)
+                    write_to_csv(phone_number_input, weight, "True")
+                    result = send_text_message("+65" + phone_number_input, "Your pet has been fed at " + feeding_time + "!", image_url)
             
         time.sleep(0.8)
 

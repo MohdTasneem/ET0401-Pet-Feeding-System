@@ -168,8 +168,9 @@ def main():
             LCD.lcd_clear()
             LCD.lcd_display_string("Enter your Chat", 1)
             while try_again:
-                chat_id = int(get_keypad_input("ID: "))
+                chat_id = get_keypad_input("ID: ")
                 if len(chat_id) == 10:
+                    chat_id = int(chat_id)
                     otp = random.randint(1000, 9999)
                     send_telegram_message(bot_token, chat_id, "Your OTP is " + str(otp))
 
